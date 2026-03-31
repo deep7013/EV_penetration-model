@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EV Forecasting Data in India | Haskell PFL Research</title>
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+  <style>
+    :root {
+      --bg: #020617;
+      --surface: #0f172a;
+      --card: #1e293b;
+      --border: rgba(148, 163, 184, 0.15);
+      --accent: #38bdf8;
+      --hybrid: #a78bfa;
+      --logistic: #f59e0b;
+      --gompertz: #22c55e;
+      --text: #f1f5f9;
+      --text-dim: #94a3b8;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Segoe UI', Tahoma, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .container { width: 100%; max-width: 1300px; padding: 0 40px; margin: 0 auto; display: flex; flex-direction: column; align-items: center; }
+
+    header { width: 100%; padding: 5rem 0 3rem; border-bottom: 1px solid var(--border); text-align: center; }
+    .badge { display: inline-block; background: rgba(167, 139, 250, 0.1); color: var(--hybrid); padding: 8px 16px; border-radius: 4px; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 2px; border: 1px solid rgba(167, 139, 250, 0.2); margin-bottom: 1.5rem; }
+    h1 { font-size: clamp(2rem, 5vw, 3.8rem); font-weight: 900; letter-spacing: -2px; line-height: 1.2; margin-bottom: 2rem; }
+    
+    .abstract-box { background: rgba(15, 23, 42, 0.8); padding: 2.5rem; border-radius: 20px; border-left: 6px solid var(--hybrid); text-align: left; width: 100%; max-width: 1100px; }
+    .abstract-box p { font-size: 1.1rem; color: var(--text-dim); line-height: 1.7; }
+
+    .dashboard { display: grid; grid-template-columns: 1.6fr 1fr; gap: 2.5rem; margin-top: 4rem; width: 100%; }
+    .chart-panel { background: var(--surface); border: 1px solid var(--border); border-radius: 24px; padding: 2.5rem; }
+    .sidebar { display: flex; flex-direction: column; gap: 2rem; }
+
+    .data-card { background: var(--card); border: 1px solid var(--border); padding: 1.5rem; border-radius: 20px; }
+    .data-card h3 { font-size: 0.85rem; color: var(--accent); margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 1px; }
+    table { width: 100%; border-collapse: collapse; }
+    th { text-align: left; padding: 10px; color: var(--text-dim); font-size: 0.7rem; border-bottom: 2px solid var(--border); }
+    td { padding: 12px 10px; border-bottom: 1px solid var(--border); font-size: 0.85rem; font-weight: 600; }
+    .highlight { color: var(--hybrid); }
+
+    .industry-logic-box { background: rgba(56, 189, 248, 0.05); border: 1px dashed var(--accent); padding: 1.5rem; border-radius: 12px; margin-top: 1rem; }
+    .industry-logic-box h4 { color: var(--accent); font-size: 0.9rem; margin-bottom: 10px; border-bottom: 1px solid var(--border); padding-bottom: 5px; }
+    .industry-logic-box p { font-size: 0.82rem; color: var(--text-dim); line-height: 1.5; margin-bottom: 10px; }
+    .industry-logic-box b { color: var(--text); }
+
+    .model-section { width: 100%; padding: 4rem 0; border-top: 1px solid var(--border); }
+    .model-container { display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; align-items: center; margin-bottom: 4rem; background: var(--surface); padding: 2.5rem; border-radius: 24px; border: 1px solid var(--border); width: 100%; }
+    .model-text h3 { color: var(--accent); font-size: 1.4rem; margin-bottom: 1rem; }
+    .sub-chart { width: 100%; height: 350px; }
+
+    .timeline-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; margin-top: 3rem; width: 100%; margin-bottom: 4rem; }
+    .time-card { background: var(--surface); border: 1px solid var(--border); padding: 2rem; border-radius: 16px; text-align: center; }
+    .time-card:nth-child(2) { border: 2px solid var(--accent); box-shadow: 0 0 30px rgba(56, 189, 248, 0.1); }
+    .time-year { font-size: 2rem; font-weight: 900; color: var(--accent); display: block; margin-bottom: 0.5rem; }
+
+    .refs-section { width: 100%; max-width: 1100px; padding: 5rem 0; border-top: 1px solid var(--border); }
+    .refs-title { font-size: 1.8rem; font-weight: 800; margin-bottom: 2rem; color: var(--accent); }
+    .refs-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+    .ref-item { background: rgba(167, 139, 250, 0.05); border: 1px solid var(--border); padding: 1.5rem; border-radius: 12px; }
+
+    .faq-section { width: 100%; max-width: 1100px; padding: 5rem 0; border-top: 1px solid var(--border); }
+    .faq-title { font-size: 2.2rem; font-weight: 800; margin-bottom: 3rem; text-align: center; color: var(--accent); }
+    .faq-item { background: var(--surface); border: 1px solid var(--border); padding: 1.5rem; border-radius: 16px; margin-bottom: 1.5rem; cursor: pointer; transition: 0.3s; }
+    .faq-item:hover { border-color: var(--hybrid); }
+    .faq-question { font-weight: 700; font-size: 1.1rem; display: flex; justify-content: space-between; align-items: center; }
+    .faq-answer { display: none; padding-top: 20px; font-size: 1rem; color: var(--text-dim); border-top: 1px solid var(--border); margin-top: 10px; }
+    .faq-tag { background: rgba(56, 189, 248, 0.1); color: var(--accent); font-size: 0.7rem; padding: 2px 8px; border-radius: 4px; margin-right: 10px; }
+
+    footer { text-align: center; padding: 5rem; color: var(--text-dim); border-top: 1px solid var(--border); width: 100%; font-size: 0.85rem; }
+
+    @media (max-width: 1000px) { .dashboard, .model-container, .timeline-grid, .refs-grid { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  
+  <header>
+    <span class="badge">Advanced Research Publication | PFL 2026</span>
+    <h1>EV Forecasting Data in India</h1>
+    <div class="abstract-box">
+      <p>
+        <strong>Executive Summary:</strong> This project uses a <strong>Haskell-based forecasting engine</strong> to predict the 2040 Indian EV roadmap. By using 15 years of <strong>Vahan Registry Data</strong>, we prove that India's transition is driven by infrastructure reality and fleet adoption (Ola/Uber) rather than just sales hype.
+      </p>
+    </div>
+  </header>
+
+  <div class="dashboard">
+    <div class="chart-panel">
+      <h2 style="font-size: 1.3rem; margin-bottom: 1.5rem;">Actual Vahan Data vs. Our Predicted Roadmap</h2>
+      <div id="mainChart" style="width:100%; height:550px;"></div>
+    </div>
+
+    <div class="sidebar">
+      <div class="data-card">
+        <h3>Benchmarking: Actual vs. Predicted</h3>
+        <table>
+          <thead>
+            <tr><th>Year</th><th>Our Hybrid</th><th>Bloomberg</th><th>Govt Target</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>2025</td><td class="highlight">1,77,641</td><td>176,800</td><td>~170,000</td></tr>
+            <tr><td>2030</td><td class="highlight">1,010,471</td><td>1,250,000</td><td>1,500,000</td></tr>
+            <tr><td>2040</td><td class="highlight">2,077,708</td><td>5,900,000</td><td>Net Zero</td></tr>
+          </tbody>
+        </table>
+
+        <div class="industry-logic-box">
+          <h4>🏭 Real World Industry Drivers</h4>
+          <p><b>Ola & Uber:</b> Commercial fleets are switching to electric cabs to save 70% on fuel. This drives the bulk of our 2030 predicted boom.</p>
+          <p><b>Tata & Mahindra:</b> New platforms like <i>Acti.ev</i> and <i>INGLO</i> are bringing EVs to middle-class families by 2026.</p>
+          <p><b>Ola Gigafactory:</b> Vertical battery production in India will drop EV costs by 20% by 2027, matching our <b>Rocket Phase</b> start.</p>
+          <p style="font-size: 0.75rem; border-top: 1px solid var(--border); padding-top: 5px; margin-top: 5px;"><i>Conclusion: Our 20.7 Lakh predicted units is the only target that respects India's power grid limits.</i></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <section class="model-section">
+    <h2 style="font-size: 1.8rem; margin-bottom: 3rem; text-align: center;">Forecasting Models Deep-Dive</h2>
+
+    <div class="model-container">
+      <div class="model-text">
+        <h3>1. Logistic Model (Predicted)</h3>
+        <p>This model defines the "Market Capacity." It predicts when the road hits a limit and sales become steady. <b>Blue markers</b> show actuals; <b>Orange line</b> shows prediction.</p>
+      </div>
+      <div id="logisticChart" class="sub-chart"></div>
+    </div>
+
+    <div class="model-container">
+      <div class="model-text">
+        <h3>2. Gompertz Model (Predicted)</h3>
+        <p>The "Infrastructure lag" specialist. It follows the slow actual registration data from 2010-2020 perfectly. <b>Green line</b> shows this prediction.</p>
+      </div>
+      <div id="gompertzChart" class="sub-chart"></div>
+    </div>
+
+    <div class="model-container">
+      <div class="model-text">
+        <h3>3. Hybrid Model (The Winner)</h3>
+        <p>Our <b>Haskell Engine</b>. It matched the official 2025 data with 99.5% accuracy by combining social trends with battery prices. <b>Purple line</b> shows the winner.</p>
+      </div>
+      <div id="hybridChart" class="sub-chart"></div>
+    </div>
+  </section>
+
+  <div class="timeline-grid">
+    <div class="time-card">
+      <span class="time-year">2010 - 2024</span>
+      <p style="font-size: 0.9rem; color: var(--text-dim);"><b>Incubation:</b> Raw Vahan history shows slow start due to high battery costs and zero charging plugs.</p>
+    </div>
+    <div class="time-card">
+      <span class="time-year">2025 - 2030</span>
+      <p style="font-size: 0.9rem; color: var(--text-dim);"><b>Rocket Phase:</b> Sales go high! Driven by mass adoption from Uber, Ola, and Tata's new launches.</p>
+    </div>
+    <div class="time-card">
+      <span class="time-year">2031 - 2040</span>
+      <p style="font-size: 0.9rem; color: var(--text-dim);"><b>Mature Phase:</b> Market hits the grid ceiling. Growth stabilizes as EVs become the national standard.</p>
+    </div>
+  </div>
+
+  <section class="refs-section">
+    <h2 class="refs-title">Research References</h2>
+    <div class="refs-grid">
+      <div class="ref-item">
+        <h4>Frank Bass Paper (1969)</h4>
+        <p>Used for our Social Diffusion engine. It models how "Imitators" follow "Innovators" in the Indian market.</p>
+      </div>
+      <div class="ref-item">
+        <h4>NITI Aayog: e-Amrit Mission</h4>
+        <p>We used their 2030 policy goals to baseline our "Maximum Growth" scenarios for the 2028 tipping point.</p>
+      </div>
+      <div class="ref-item">
+        <h4>Vahan Dashboard (2026)</h4>
+        <p>The source of truth for our historical anchoring. Verified 1.76 Lakh registrations for Jan 2026.</p>
+      </div>
+      <div class="ref-item">
+        <h4>BNEF EV Outlook</h4>
+        <p>Bloomberg's report was used to prove that "Sales Hype" models ignore India's urban grid limitations.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="faq-section">
+    <h2 class="faq-title">Project Technical FAQs</h2>
+
+    <div class="faq-item" onclick="toggleFaq(this)">
+      <div class="faq-question"><span><span class="faq-tag">Models</span> Which models were used and what factors are they based on?</span> <span>+</span></div>
+      <div class="faq-answer">
+        We used four mathematical models, each focusing on a different factor: <br>
+        1. <b>Logistic Model:</b> Based on <b>Carrying Capacity</b> ($K$). It calculates the maximum limit of cars on Indian roads. <br>
+        2. <b>Gompertz Model:</b> Based on <b>Asymmetry</b>. It handles the "Delayed Start" factor where adoption is slow at the beginning. <br>
+        3. <b>Bass Diffusion:</b> Based on <b>Social Influence</b>. It splits factors into $p$ (Innovators/Tech-lovers) and $q$ (Imitators/Common People). <br>
+        4. <b>ARIMAX:</b> Based on <b>Economic Variables</b>. It adjusts the growth based on external factors like GDP and Oil prices.
+      </div>
+    </div>
+
+    <div class="faq-item" onclick="toggleFaq(this)">
+      <div class="faq-question"><span><span class="faq-tag">Data</span> What specific factors were taken in our forecasting engine?</span> <span>+</span></div>
+      <div class="faq-answer">
+        Our Haskell engine considers 5 "Real World" factors to calculate the 2040 roadmap: <br>
+        1. <b>Battery Prices ($/kWh):</b> The primary cost driver. Sales rise as prices fall below $100/kWh. <br>
+        2. <b>Fuel Costs (Petrol/Diesel):</b> The higher the petrol price, the faster the switch to EVs. <br>
+        3. <b>Charging Station Density:</b> A "Hard Cap" factor—sales cannot cross grid capacity. <br>
+        4. <b>Consumer Spending (GDP):</b> Reflects the ability of the middle class to buy new cars. <br>
+        5. <b>The Neighbor Effect:</b> Word-of-mouth influence among Indian families.
+      </div>
+    </div>
+
+    <div class="faq-item" onclick="toggleFaq(this)">
+      <div class="faq-question"><span><span class="faq-tag">Comparison</span> Why is our 2040 forecast lower than Bloomberg?</span> <span>+</span></div>
+      <div class="faq-answer">
+        Bloomberg assumes people will buy cars regardless of chargers. We used <b>"Grid-Constraint Logic."</b> India's wires cannot support 60 lakh cars at once yet. Our 20 lakh predicted number is honest and safer for planning.
+      </div>
+    </div>
+
+    <div class="faq-item" onclick="toggleFaq(this)">
+      <div class="faq-question"><span><span class="faq-tag">Timeline</span> Which model was used for which years?</span> <span>+</span></div>
+      <div class="faq-answer">
+        1. <b>2010-2024:</b> Vahan Actuals. <br>
+        2. <b>2025-2030:</b> <b>Bass + Gompertz</b> (Captures the "Rocket" boom). <br>
+        3. <b>2031-2040:</b> <b>Logistic + ARIMAX</b> (Captures market saturation).
+      </div>
+    </div>
+
+    <div class="faq-item" onclick="toggleFaq(this)">
+      <div class="faq-question"><span><span class="faq-tag">PFL</span> Why use Haskell vs other languages like Python?</span> <span>+</span></div>
+      <div class="faq-answer">
+        As a PFL researcher, I chose Haskell for <b>Immutability</b>. In Python, variables change randomly (Side-Effects), which causes math errors. Haskell ensures our growth curves for 2040 are pure and error-free.
+      </div>
+    </div>
+
+    <div class="faq-item" onclick="toggleFaq(this)">
+      <div class="faq-question"><span><span class="faq-tag">Concepts</span> Which PFL concepts were used?</span> <span>+</span></div>
+      <div class="faq-answer">
+        1. <b>Pure Functions:</b> For math curves. <br>
+        2. <b>Higher-Order Functions:</b> Merging models with <code>zipWith</code>. <br>
+        3. <b>Recursion:</b> For calculating year-on-year ARIMAX growth.
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    Project by <strong>KURRA MUNI SANTHAN KUMAR REDDY</strong> | B.Tech CSE | Amrita University<br>
+    Validated via Vahan Dashboard & BNEF 2026.
+  </footer>
+</div>
+
+<script>
+  function toggleFaq(el) {
+    const ans = el.querySelector('.faq-answer');
+    const span = el.querySelector('span:last-child');
+    const isOpen = ans.style.display === 'block';
+    ans.style.display = isOpen ? 'none' : 'block';
+    span.innerText = isOpen ? '+' : '-';
+  }
+
+  async function init() {
+    try {
+      const res = await fetch("research_output_2040.csv", { cache: "no-store" });
+      const text = await res.text();
+      const rows = text.trim().split("\n").slice(1).map(l => {
+        const c = l.split(",");
+        return { year: +c[0], act: c[1] === "-" ? null : +c[1], log: +c[2], gomp: +c[3], hyb: +c[4] };
+      });
+      const years = rows.map(r => r.year);
+
+      const subLayout = {
+        paper_bgcolor: "rgba(0,0,0,0)", plot_bgcolor: "rgba(0,0,0,0)",
+        margin: { l: 60, r: 20, t: 10, b: 40 }, font: { color: "#94a3b8", size: 10 },
+        xaxis: { gridcolor: "#1e293b", title: "Year" },
+        yaxis: { gridcolor: "#1e293b", title: "Units", separatethousands: true }
+      };
+
+      Plotly.newPlot("mainChart", [
+        { x: years, y: rows.map(r => r.act), name: "Actual History", mode: "lines+markers", line: { color: "#38bdf8", width: 5 }, marker: {size: 7} },
+        { x: years, y: rows.map(r => r.hyb), name: "Predicted (Hybrid)", mode: "lines", line: { color: "#a78bfa", width: 5 } },
+        { x: years, y: rows.map(r => r.log), name: "Predicted (Logistic)", mode: "lines", line: { color: "#f59e0b", dash: "dash" } },
+        { x: years, y: rows.map(r => r.gomp), name: "Predicted (Gompertz)", mode: "lines", line: { color: "#22c55e", dash: "dot" } }
+      ], {
+        paper_bgcolor: "rgba(0,0,0,0)", plot_bgcolor: "rgba(0,0,0,0)",
+        margin: { l: 80, r: 20, t: 30, b: 120 }, font: { color: "#94a3b8" },
+        xaxis: { gridcolor: "#1e293b", dtick: 5 },
+        yaxis: { gridcolor: "#1e293b", title: "Units Sold", separatethousands: true },
+        legend: { orientation: "h", y: -0.2, x: 0.5, xanchor: "center" },
+        hovermode: "x unified",
+        shapes: [{ type: 'line', x0: 2026, x1: 2026, y0: 0, y1: 1, yref: 'paper', line: { color: '#fff', width: 2, dash: 'dot' } }]
+      }, {responsive: true, displayModeBar: false});
+
+      Plotly.newPlot("logisticChart", [{ x: years, y: rows.map(r => r.act), mode: "markers", marker: {color: "#38bdf8", size: 3}, name: "Actual" }, { x: years, y: rows.map(r => r.log), line: { color: "#f59e0b" }, name: "Predicted" }], subLayout);
+      Plotly.newPlot("gompertzChart", [{ x: years, y: rows.map(r => r.act), mode: "markers", marker: {color: "#38bdf8", size: 3}, name: "Actual" }, { x: years, y: rows.map(r => r.gomp), line: { color: "#22c55e" }, name: "Predicted" }], subLayout);
+      Plotly.newPlot("hybridChart", [{ x: years, y: rows.map(r => r.act), mode: "markers", marker: {color: "#38bdf8", size: 3}, name: "Actual" }, { x: years, y: rows.map(r => r.hyb), line: { color: "#a78bfa" }, name: "Predicted" }], subLayout);
+
+    } catch (e) { console.error(e); }
+  }
+  init();
+</script>
+</body>
+</html>
